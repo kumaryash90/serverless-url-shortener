@@ -1,3 +1,7 @@
+node_modules/
+infra/builds/
+infra/response*.json
+
 .terraform/
 
 *.tfstate

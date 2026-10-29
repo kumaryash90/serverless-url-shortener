@@ -30,3 +30,30 @@ resource "aws_iam_role_policy" "create_lambda_dynamodb" {
     role = aws_iam_role.create_lambda_role.id
     policy = data.aws_iam_policy_document.create_lambda_dynamodb.json
 }
+
+resource "aws_iam_role" "redirect_lambda_role" {
+    name = "url-shortener-redirect-lambda-role"
+    assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "redirect_lambda_logs" {
+    role = aws_iam_role.redirect_lambda_role.name
+    policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "redirect_lambda_permissions" {
+    statement {
+        actions = ["dynamodb:GetItem"]
+        resources = [aws_dynamodb_table.links.arn]
+    }
+    statement {
+        actions = ["sqs:SendMessage"]
+        resources = [aws_sqs_queue.clicks.arn]
+    }
+}
+
+resource "aws_iam_role_policy" "redirect_lambda_permissions" {
+    name = "redirect-permissions"
+    role = aws_iam_role.redirect_lambda_role.id
+    policy = data.aws_iam_policy_document.redirect_lambda_permissions.json
+}

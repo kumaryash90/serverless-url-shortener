@@ -18,3 +18,25 @@ resource "aws_lambda_function" "create" {
         }
     }
 }
+
+data "archive_file" "redirect" {
+    type = "zip"
+    source_dir = "${path.module}/../src/redirect"
+    output_path = "${path.module}/builds/redirect.zip"
+}
+
+resource "aws_lambda_function" "redirect" {
+    function_name = "url-shortener-redirect"
+    filename = data.archive_file.redirect.output_path
+    source_code_hash = data.archive_file.redirect.output_base64sha256
+    role = aws_iam_role.redirect_lambda_role.arn
+    handler = "index.handler"
+    runtime = "nodejs20.x"
+
+    environment {
+        variables = {
+            TABLE_NAME = aws_dynamodb_table.links.name
+            QUEUE_URL = aws_sqs_queue.clicks.url
+        }
+    }
+}

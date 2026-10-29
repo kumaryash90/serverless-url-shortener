@@ -40,3 +40,24 @@ resource "aws_lambda_function" "redirect" {
         }
     }
 }
+
+data "archive_file" "click_consumer" {
+    type = "zip"
+    source_dir = "${path.module}/../src/click-consumer"
+    output_path = "${path.module}/builds/click-consumer.zip"
+}
+
+resource "aws_lambda_function" "click_consumer" {
+    function_name = "url-shortener-click-consumer"
+    filename = data.archive_file.click_consumer.output_path
+    source_code_hash = data.archive_file.click_consumer.output_base64sha256
+    role = aws_iam_role.click_consumer_role.arn
+    handler = "index.handler"
+    runtime = "nodejs20.x"
+
+    environment {
+        variables = {
+            TABLE_NAME = aws_dynamodb_table.links.name
+        }
+    }
+}

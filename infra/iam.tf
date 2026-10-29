@@ -84,3 +84,26 @@ resource "aws_iam_role_policy" "click_consumer_permissions" {
     role = aws_iam_role.click_consumer_role.id
     policy = data.aws_iam_policy_document.click_consumer_permissions.json
 }
+
+resource "aws_iam_role" "stats_lambda_role" {
+    name = "stats-lambda-role"
+    assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "stats_lambda_logs" {
+    role = aws_iam_role.stats_lambda_role.name
+    policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "stats_lambda_permissions" {
+    statement {
+        actions = ["dynamodb:GetItem"]
+        resources = [aws_dynamodb_table.links.arn]
+    }
+}
+
+resource "aws_iam_role_policy" "stats_lambda_permissions" {
+    name = "stats-lambda-permissions"
+    role = aws_iam_role.stats_lambda_role.id
+    policy = data.aws_iam_policy_document.stats_lambda_permissions.json
+}

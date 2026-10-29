@@ -61,3 +61,24 @@ resource "aws_lambda_function" "click_consumer" {
         }
     }
 }
+
+data "archive_file" "stats" {
+    type = "zip"
+    source_dir = "${path.module}/../src/stats"
+    output_path = "${path.module}/builds/stats.zip"
+}
+
+resource "aws_lambda_function" "stats" {
+    function_name = "url-shortener-stats"
+    filename = data.archive_file.stats.output_path
+    source_code_hash = data.archive_file.stats.output_base64sha256
+    role = aws_iam_role.stats_lambda_role.arn
+    handler = "index.handler"
+    runtime = "nodejs20.x"
+
+    environment {
+        variables = {
+            TABLE_NAME = aws_dynamodb_table.links.name
+        }
+    }
+}
